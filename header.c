@@ -10,6 +10,7 @@
 /*define macros to move cursor*/
 #define cursorforward(x) printf("\033[%dC", (x))
 #define cursorbackward(x) printf("\033[%dD", (x))
+#define deletecursor(x) printf("\033[%dK", (x));
 
 /*define keys */
 #define KEY_ESCAPE  0x001b
@@ -18,6 +19,7 @@
 #define KEY_RIGHT   0x0108
 #define HOME        0x0113
 #define END         0x0111
+#define BACKSPACE   127
 
 
 /*Maximum size of the buffer*/
@@ -79,6 +81,9 @@ static int kbesc(void)
             case 'F':
                 c = END;
                 break;
+            case 127:
+                c = BACKSPACE;
+                break;
             default:
                 c = 0;
                 break;
@@ -133,6 +138,25 @@ char *readline(void){
               cursorforward(1);
               cursorbackward_index--;
             }
+      }else if (c == BACKSPACE ) {
+        if(buffer_index!=0){
+          if(cursorbackward_index!=0){
+            if( buffer_index>cursorbackward_index){
+              cursorbackward(1);
+              deletecursor(0);
+              for(int j=buffer_index-cursorbackward_index;j<buffer_index;j++)
+                putchar(buffer[j]);
+              for(int j=buffer_index-cursorbackward_index;j<buffer_index;j++)
+                buffer[j-1]=buffer[j];
+              cursorbackward(cursorbackward_index);
+              buffer_index--;
+            }
+          }else{
+            cursorbackward(1);
+            deletecursor(0);
+            buffer_index--;
+          }
+        }
       }else {
           if(cursorbackward_index == 0){
             buffer[buffer_index] = c;
