@@ -23,7 +23,11 @@
 #define BACKSPACE   127
 #define DELETE      0x0092
 #define TILDE       126
-
+#define KEY_UP      0x0105
+#define KEY_DOWN    0x0106
+#define MAX_SIZE   200
+#define KEY_ESCAPE  0x001b
+#define KEY_ENTER   0x000a
 
 /*Maximum size of the buffer*/
 #define buffer_max_size 1024
@@ -35,6 +39,10 @@ static int kbhit(void);
 static int kbesc(void);
 static int kbget(void);
 
+/* for history commands storing */
+static char *history_feature[MAX_SIZE];
+static int length_buffer[MAX_SIZE];
+static int position =0; 
 
 static int getch(void)
 {
@@ -78,6 +86,12 @@ static int kbesc(void)
             case 'D':
                 c = KEY_RIGHT;
                 break;
+            case 'A':
+                c = KEY_UP;
+                break;
+            case 'B':
+                c = KEY_DOWN;
+                break;
             case 'H':
                 c = HOME;
                 break;
@@ -117,14 +131,18 @@ char *readline(void){
   int buffer_size = buffer_max_size;
   char *buffer = malloc(buffer_size);
   int cursorbackward_index = 0;
+  int command_position =position;
   while (1) {
       c = kbget();
       if(c == 4){
           exit(EXIT_FAILURE);
       }else if(c == KEY_ENTER){
-          buffer[buffer_index] = '\0';
-          cursorbackward_index = 0;
-          return buffer;
+        buffer[buffer_index] = '\0';
+        cursorbackward_index = 0;
+        history_feature[position] = buffer;
+        length_buffer[position] = buffer_index;
+        position++;
+        return buffer;
       }else if (c == KEY_ESCAPE) {
           exit(EXIT_FAILURE);
       }else if( c == HOME){
@@ -184,6 +202,34 @@ char *readline(void){
             }
           }
         }
+      }else if( c == KEY_UP) {
+        if(position!=0 && command_position>0){
+          deletecursor(1);
+          cursorbackward(buffer_max_size);
+          putchar('$');
+          putchar(' ');
+          char *temp = history_feature[command_position-1];
+          for(int k=0; k<length_buffer[command_position-1];k++){
+            putchar(temp[k]);
+          buffer[k]=temp[k];
+          }
+          buffer_index=length_buffer[command_position-1];
+          command_position--;
+        }
+      }else if( c == KEY_DOWN) {
+        if(position!=0 && command_position<position){
+          deletecursor(1);
+          cursorbackward(buffer_max_size);
+          putchar('$');
+          putchar(' ');
+          char *temp = history_feature[command_position+1];
+          for(int k=0; k<length_buffer[command_position+1];k++){
+            putchar(temp[k]);
+            buffer[k]=temp[k];
+            }
+          buffer_index=length_buffer[command_position+1];
+          command_position++;
+          }
       }else {
           if(cursorbackward_index == 0){
             buffer[buffer_index] = c;
