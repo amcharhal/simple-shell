@@ -7,15 +7,21 @@
 #include <termios.h>
 #include <unistd.h>
 
-
+/*define macros to move cursor*/
+#define cursorforward(x) printf("\033[%dC", (x))
+#define cursorbackward(x) printf("\033[%dD", (x))
 
 /*define keys */
-#define KEY_ENTER   0x000a
 #define KEY_ESCAPE  0x001b
+#define KEY_ENTER   0x000a
+#define KEY_LEFT    0x0107
+#define KEY_RIGHT   0x0108
+#define HOME        0x0113
+#define END         0x0111
+
 
 /*Maximum size of the buffer*/
 #define buffer_max_size 1024
-
 static struct termios term, oterm;
 
 /* function handle putchar with termios */
@@ -61,6 +67,18 @@ static int kbesc(void)
     c = getch();
     if (c == '[') {
         switch (getch()) {
+            case 'C':
+                c = KEY_LEFT;
+                break;
+            case 'D':
+                c = KEY_RIGHT;
+                break;
+            case 'H':
+                c = HOME;
+                break;
+            case 'F':
+                c = END;
+                break;
             default:
                 c = 0;
                 break;
@@ -75,6 +93,7 @@ static int kbesc(void)
 static int kbget(void)
 {
     int c;
+
     c = getch();
     return (c == KEY_ESCAPE) ? kbesc() : c;
 }
@@ -83,26 +102,54 @@ char *readline(void){
   int buffer_index =0;
   int buffer_size = buffer_max_size;
   char *buffer = malloc(buffer_size);
+  int cursorbackward_index = 0;
   while (1) {
       c = kbget();
       if(c == 4){
           exit(EXIT_FAILURE);
       }else if(c == KEY_ENTER){
           buffer[buffer_index] = '\0';
+          cursorbackward_index = 0;
           return buffer;
       }else if (c == KEY_ESCAPE) {
           exit(EXIT_FAILURE);
-      }else{
+      }else if( c == HOME){
+            if(cursorbackward_index<buffer_index && cursorbackward_index>=0){
+              cursorbackward(buffer_index-cursorbackward_index);
+              cursorbackward_index = buffer_index;
+              }
+      }else if( c == END){
+          if(cursorbackward_index<=buffer_index && cursorbackward_index>0){
+            cursorforward(cursorbackward_index);
+            cursorbackward_index =0;
+          }
+      }else if (c == KEY_RIGHT) {
+          if(cursorbackward_index<buffer_index  && cursorbackward_index>=0){
+            cursorbackward_index++;
+            cursorbackward(1);
+          }
+      }else if (c == KEY_LEFT) {
+            if(cursorbackward_index>0){
+              cursorforward(1);
+              cursorbackward_index--;
+            }
+      }else {
+          if(cursorbackward_index == 0){
             buffer[buffer_index] = c;
             buffer_index++;
+
+          }else{
+            buffer[buffer_index-cursorbackward_index] = c;
+            cursorbackward_index--;
           }
           putchar(c);
-
+      }
       /* reallocate the buffer size to avoid buffer  overflows */
       if(buffer_index>=buffer_size){
         buffer_size *= 2;
         buffer = realloc(buffer, buffer_size);
-        }
       }
-      return 0;
-    }
+
+  }
+  return 0;
+}
