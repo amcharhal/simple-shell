@@ -7,7 +7,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-/*define macros to move cursor*/
+/*define macros to move cursor and delete*/
 #define cursorforward(x) printf("\033[%dC", (x))
 #define cursorbackward(x) printf("\033[%dD", (x))
 #define deletecursor(x) printf("\033[%dK", (x));
@@ -20,6 +20,9 @@
 #define HOME        0x0113
 #define END         0x0111
 #define BACKSPACE   127
+#define BACKSPACE   127
+#define DELETE      0x0092
+#define TILDE       126
 
 
 /*Maximum size of the buffer*/
@@ -84,6 +87,12 @@ static int kbesc(void)
             case 127:
                 c = BACKSPACE;
                 break;
+            case 51:
+              c = DELETE;
+              break;
+            case 126:
+              c = TILDE;
+              break;
             default:
                 c = 0;
                 break;
@@ -157,11 +166,28 @@ char *readline(void){
             buffer_index--;
           }
         }
+      }else if (c == DELETE ) {
+        c= getch();
+        if(c == TILDE)
+        if(buffer_index!=0){
+          if(cursorbackward_index!=0){
+            if( buffer_index>=cursorbackward_index){
+              deletecursor(0);
+              for(int j=buffer_index-cursorbackward_index+1;j<buffer_index;j++)
+                putchar(buffer[j]);
+              for(int j=buffer_index-cursorbackward_index+1;j<buffer_index;j++)
+                buffer[j-1]=buffer[j];
+              if(cursorbackward_index>1)
+                cursorbackward(cursorbackward_index-1);
+              cursorbackward_index--;
+              buffer_index--;
+            }
+          }
+        }
       }else {
           if(cursorbackward_index == 0){
             buffer[buffer_index] = c;
             buffer_index++;
-
           }else{
             buffer[buffer_index-cursorbackward_index] = c;
             cursorbackward_index--;
