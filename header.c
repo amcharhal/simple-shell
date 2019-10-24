@@ -20,14 +20,11 @@
 #define HOME        0x0113
 #define END         0x0111
 #define BACKSPACE   127
-#define BACKSPACE   127
 #define DELETE      0x0092
 #define TILDE       126
 #define KEY_UP      0x0105
 #define KEY_DOWN    0x0106
 #define MAX_SIZE   200
-#define KEY_ESCAPE  0x001b
-#define KEY_ENTER   0x000a
 
 /*Maximum size of the buffer*/
 #define buffer_max_size 1024
@@ -42,7 +39,7 @@ static int kbget(void);
 /* for history commands storing */
 static char *history_feature[MAX_SIZE];
 static int length_buffer[MAX_SIZE];
-static int position =0; 
+static int position =0;
 
 static int getch(void)
 {
@@ -248,4 +245,13 @@ char *readline(void){
 
   }
   return 0;
+}
+void excute(char *command){
+  if (!strcmp(command, "exit")){
+    exit(EXIT_FAILURE);
+  }else if(!strcmp(command, "help")){
+    printf("Mohamed amcharhal. simple shell prompt to return the buffer and handle keyboard keys\n");
+  }else{
+    printf("Sorry This command line is not yet implemented \n");
+    }
 }

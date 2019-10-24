@@ -7,5 +7,5 @@
 
 /*readline function */
 char *readline(void);
-
+void excute(char *command); 
 #endif

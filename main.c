@@ -9,7 +9,8 @@ int main(void)
       printf("$ ");
       command = readline();
       putchar('\n');
-      printf("  %s\n",command);
+      //printf("  %s\n",command);  // only to show the buffer
+      excute(command);
   }
     return 0;
   }
